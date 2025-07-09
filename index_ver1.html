@@ -228,37 +228,31 @@
          * @param {'new' | 'random' | 'resume'} mode - 開始モード
          */
         function startGame(mode) {
-            if (allQuestions.length === 0 && mode !== 'resume') {
+            if (allQuestions.length === 0) {
                 errorMessage.textContent = '問題データが読み込まれていません。';
                 return;
             }
 
             currentQuestionIndex = -1;
             quizContainer.innerHTML = '';
+            progress = {};
 
             switch (mode) {
                 case 'new':
-                    progress = {};
                     questionOrder = allQuestions.map((_, index) => index);
                     break;
                 case 'random':
-                    progress = {};
                     questionOrder = allQuestions.map((_, index) => index).sort(() => Math.random() - 0.5);
                     break;
                 case 'resume':
                     const savedData = JSON.parse(localStorage.getItem(storageKey));
-                    if (!savedData) {
-                        alert('保存されたデータが見つかりませんでした。');
-                        return;
-                    }
                     allQuestions = savedData.questions;
-                    progress = savedData.progress || {};
+                    progress = savedData.progress;
                     const answeredIds = Object.keys(progress).map(Number);
                     const unansweredQuestions = allQuestions
                         .map((q, i) => ({ q, i }))
                         .filter(item => !answeredIds.includes(item.q.questionId));
                     questionOrder = unansweredQuestions.map(item => item.i);
-                    
                     // 解答済みの問題を表示
                     allQuestions.forEach((q, i) => {
                         if(answeredIds.includes(q.questionId)) {
@@ -266,7 +260,7 @@
                         }
                     });
 
-                    if (questionOrder.length === 0 && allQuestions.length > 0) {
+                    if (questionOrder.length === 0) {
                         alert('すべての問題が解答済みです。新しく始めますか？');
                         startGame('new');
                         return;
@@ -318,13 +312,10 @@
             if (question.difficulty) {
                 infoHtml += `<span class="bg-yellow-500 text-white text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${question.difficulty}</span>`;
             }
-            
-            const answeredCount = Object.values(progress).filter(p => p.status === 'answered').length;
-            const questionNumber = isPreloaded ? '(解答済み)' : (answeredCount + 1);
 
             card.innerHTML = `
                 <div class="flex justify-between items-start">
-                    <p class="text-lg font-bold text-indigo-200">問題 ${questionNumber}</p>
+                    <p class="text-lg font-bold text-indigo-200">問題 ${isPreloaded ? '(解答済み)' : (Object.keys(progress).length + 1)}</p>
                     <div class="text-right">${infoHtml}</div>
                 </div>
                 <p class="mt-2 text-xl sm:text-2xl font-semibold text-white">${question.questionText}</p>
@@ -512,7 +503,11 @@
         startNewBtn.addEventListener('click', () => startGame('new'));
         startRandomBtn.addEventListener('click', () => startGame('random'));
         resumeBtn.addEventListener('click', () => {
-            startGame('resume');
+            const savedData = localStorage.getItem(storageKey);
+            if(savedData) {
+                loadJson(JSON.stringify(JSON.parse(savedData).questions));
+                startGame('resume');
+            }
         });
 
         // 設定モーダル
@@ -523,14 +518,13 @@
         closeModalBtn.addEventListener('click', () => {
             settingsModal.classList.add('hidden');
         });
-        // [修正] clearProgress() の呼び出しを削除し、代わりに loadProgress() を呼び出す
         saveAndQuitBtn.addEventListener('click', () => {
             saveProgress();
             settingsModal.classList.add('hidden');
             quizContainer.classList.add('hidden');
             startScreen.classList.remove('hidden');
             scrollToBottomBtn.classList.add('hidden');
-            loadProgress(); // 「続きから」ボタンの状態を更新するために呼び出す
+            clearProgress();
         });
         
         // モーダルの外側クリックで閉じる

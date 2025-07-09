@@ -1,0 +1,37 @@
+[
+  {
+    "questionId": 1,
+    "questionInfo": "令和4年度 基本情報技術者試験 午前 問25",
+    "questionText": "CPUの性能を表す指標であるMIPSは、何の略称か。",
+    "options": [
+      "Million Instructions Per Second",
+      "Mega Instructions Per Second",
+      "Million Instructions Per System",
+      "Mega Instructions Per System"
+    ],
+    "difficulty": "☆☆",
+    "answerValue": "Million Instructions Per Second",
+    "answerExplanation": "MIPSはMillion Instructions Per Secondの略で、1秒間に実行できる命令数を100万単位で表したものです。"
+  },
+  {
+    "questionId": 2,
+    "questionInfo": "一般常識クイズ",
+    "questionText": "日本の首都はどこですか？",
+    "options": null,
+    "difficulty": "☆",
+    "answerValue": "東京",
+    "answerExplanation": "日本の首都は東京都です。日本の政治、経済、文化の中心地となっています。"
+  },
+  {
+    "questionId": 3,
+    "questionText": "次のうち、プログラミング言語ではないものはどれか？",
+    "options": [
+      "Python",
+      "HTML",
+      "Java",
+      "C++"
+    ],
+    "answerValue": "HTML",
+    "answerExplanation": "HTMLはHyperText Markup Languageの略で、ウェブページの構造を記述するためのマークアップ言語です。プログラミング言語とは分類が異なります。"
+  }
+]

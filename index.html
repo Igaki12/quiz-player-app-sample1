@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI問題集表示ツール</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 基本スタイルの設定 */
+        body {
+            font-family: 'Noto Sans JP', 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ガラスモーフィズム用の背景 */
+        .glass-bg {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* スクロールバーのスタイル */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* アニメーション */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+
+    <div class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4 sm:p-6 lg:p-8">
+        <!-- ヘッダー -->
+        <header class="fixed top-0 left-0 right-0 z-50 glass-bg shadow-md">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <h1 class="text-xl sm:text-2xl font-bold text-white">AI問題集表示ツール</h1>
+                <button id="settings-btn" class="p-2 rounded-full hover:bg-white/30 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <main class="mt-20 mb-16 container mx-auto max-w-4xl">
+            <!-- スタート画面 -->
+            <div id="start-screen" class="glass-bg rounded-2xl p-6 sm:p-8 shadow-2xl text-center text-white fade-in">
+                <h2 class="text-3xl sm:text-4xl font-bold mb-4">問題集表示ツール</h2>
+                <p class="mb-8 text-white/80">JSON形式の問題集データを読み込んで学習を開始します。</p>
+
+                <div class="space-y-4">
+                    <button id="resume-btn" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg disabled:bg-gray-500 disabled:cursor-not-allowed disabled:transform-none">
+                        保存された続きから問題を解く
+                    </button>
+                </div>
+
+                <div class="my-8 relative">
+                    <hr class="border-white/30">
+                    <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-purple-500/50 px-4 rounded-full">または</span>
+                </div>
+
+                <div class="bg-black/20 p-4 rounded-lg">
+                    <p class="mb-4">ここにJSONファイルを貼り付けるか、ファイルを選択してください。</p>
+                    <textarea id="json-input" class="w-full h-32 p-2 rounded-md bg-gray-800/50 text-white border border-white/30 focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition" placeholder="ここにJSONデータをペースト..."></textarea>
+                    <label class="mt-4 block w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition cursor-pointer text-center">
+                        <span>JSONファイルをアップロード</span>
+                        <input type="file" id="file-upload" class="hidden" accept=".json,application/json">
+                    </label>
+                </div>
+                
+                <div id="start-buttons" class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                     <button id="start-new-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg disabled:bg-gray-500">
+                        最初から問題を解く
+                    </button>
+                    <button id="start-random-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg disabled:bg-gray-500">
+                        ランダムで問題を解く
+                    </button>
+                </div>
+                <div id="error-message" class="mt-4 text-red-400 font-semibold"></div>
+            </div>
+
+            <!-- 問題表示エリア -->
+            <div id="quiz-container" class="hidden space-y-6">
+                <!-- 問題カードがここに追加される -->
+            </div>
+        </main>
+
+        <!-- フッター -->
+        <footer class="fixed bottom-0 left-0 right-0 text-center p-2 text-xs text-white/70">
+            <p>&copy; 2025 copyright Medteria All rights reserved.</p>
+        </footer>
+
+        <!-- 下スクロールボタン -->
+        <button id="scroll-to-bottom-btn" class="hidden fixed bottom-20 right-4 sm:right-6 lg:right-8 z-[1000] bg-pink-600 text-white p-3 rounded-full shadow-lg hover:bg-pink-700 transition-transform transform hover:scale-110">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+        </button>
+
+        <!-- 設定モーダル -->
+        <div id="settings-modal" class="hidden fixed inset-0 z-[2000] bg-black/60 flex items-center justify-center p-4">
+            <div class="glass-bg rounded-2xl p-6 sm:p-8 shadow-2xl text-white w-full max-w-md mx-auto fade-in">
+                <h3 class="text-2xl font-bold mb-4">設定と進捗</h3>
+                <div id="progress-status" class="mb-6 bg-black/20 p-4 rounded-lg">
+                    <p>問題データが読み込まれていません。</p>
+                </div>
+                <div class="space-y-4">
+                    <button id="save-and-quit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg">保存して終了する</button>
+                    <button id="close-modal-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 shadow-lg">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM要素の取得 ---
+        const startScreen = document.getElementById('start-screen');
+        const quizContainer = document.getElementById('quiz-container');
+        const jsonInput = document.getElementById('json-input');
+        const fileUpload = document.getElementById('file-upload');
+        const startNewBtn = document.getElementById('start-new-btn');
+        const startRandomBtn = document.getElementById('start-random-btn');
+        const resumeBtn = document.getElementById('resume-btn');
+        const startButtons = document.getElementById('start-buttons');
+        const errorMessage = document.getElementById('error-message');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const saveAndQuitBtn = document.getElementById('save-and-quit-btn');
+        const progressStatus = document.getElementById('progress-status');
+        const scrollToBottomBtn = document.getElementById('scroll-to-bottom-btn');
+
+        // --- アプリケーションの状態管理 ---
+        let allQuestions = [];
+        let questionOrder = [];
+        let currentQuestionIndex = -1;
+        let progress = {}; // { questionId: { status: 'answered' | 'seen' } }
+        const storageKey = 'quizAppProgress';
+
+        // --- サンプルJSONデータ ---
+        const sampleJson = [
+            {
+                "questionId": 101,
+                "questionInfo": "2024年 / 一般問題",
+                "questionText": "日本の現在の首都はどこですか？",
+                "options": ["A. 京都", "B. 大阪", "C. 東京", "D. 奈良"],
+                "difficulty": "☆☆☆",
+                "answerValue": "C",
+                "answerExplanation": "日本の首都は東京です。1868年に江戸が東京と改称され、日本の首都機能を担うことになりました。"
+            },
+            {
+                "questionId": 102,
+                "questionInfo": "科学 / 物理",
+                "questionText": "水が氷になる温度（摂氏）は何度ですか？",
+                "options": null,
+                "difficulty": "★☆☆",
+                "answerValue": "0度",
+                "answerExplanation": "標準大気圧下で、水は摂氏0度で凍り、氷になります。これを凝固点と呼びます。"
+            },
+            {
+                "questionId": 103,
+                "questionInfo": "歴史 / 世界史",
+                "questionText": "第二次世界大戦が終結したのは西暦何年ですか？",
+                "options": ["A. 1939年", "B. 1941年", "C. 1945年", "D. 1950年"],
+                "difficulty": "★★☆",
+                "answerValue": "C",
+                "answerExplanation": "第二次世界大戦は1945年に終結しました。ヨーロッパでは5月にドイツが降伏し、アジアでは8月に日本が降伏しました。"
+            }
+        ];
+        jsonInput.placeholder = `ここにJSONデータをペースト... \n\n例:\n${JSON.stringify(sampleJson.slice(0,1), null, 2)}`;
+
+
+        // --- 関数定義 ---
+
+        /**
+         * JSONデータを読み込み、検証する
+         * @param {string} jsonString - JSON形式の文字列
+         */
+        function loadJson(jsonString) {
+            try {
+                errorMessage.textContent = '';
+                const data = JSON.parse(jsonString);
+                if (!Array.isArray(data) || data.length === 0) {
+                    throw new Error('JSONは空でない配列である必要があります。');
+                }
+                // 必須キーの検証
+                data.forEach(q => {
+                    if (q.questionId === undefined || q.questionText === undefined || q.answerValue === undefined) {
+                        throw new Error('各問題には questionId, questionText, answerValue が必須です。');
+                    }
+                });
+                allQuestions = data;
+                startButtons.querySelectorAll('button').forEach(b => b.disabled = false);
+                return true;
+            } catch (error) {
+                allQuestions = [];
+                startButtons.querySelectorAll('button').forEach(b => b.disabled = true);
+                errorMessage.textContent = `JSONの読み込みに失敗しました: ${error.message}`;
+                console.error(error);
+                return false;
+            }
+        }
+
+        /**
+         * 問題解答セッションを開始する
+         * @param {'new' | 'random' | 'resume'} mode - 開始モード
+         */
+        function startGame(mode) {
+            if (allQuestions.length === 0) {
+                errorMessage.textContent = '問題データが読み込まれていません。';
+                return;
+            }
+
+            currentQuestionIndex = -1;
+            quizContainer.innerHTML = '';
+            progress = {};
+
+            switch (mode) {
+                case 'new':
+                    questionOrder = allQuestions.map((_, index) => index);
+                    break;
+                case 'random':
+                    questionOrder = allQuestions.map((_, index) => index).sort(() => Math.random() - 0.5);
+                    break;
+                case 'resume':
+                    const savedData = JSON.parse(localStorage.getItem(storageKey));
+                    allQuestions = savedData.questions;
+                    progress = savedData.progress;
+                    const answeredIds = Object.keys(progress).map(Number);
+                    const unansweredQuestions = allQuestions
+                        .map((q, i) => ({ q, i }))
+                        .filter(item => !answeredIds.includes(item.q.questionId));
+                    questionOrder = unansweredQuestions.map(item => item.i);
+                    // 解答済みの問題を表示
+                    allQuestions.forEach((q, i) => {
+                        if(answeredIds.includes(q.questionId)) {
+                           displayQuestion(i, true);
+                        }
+                    });
+
+                    if (questionOrder.length === 0) {
+                        alert('すべての問題が解答済みです。新しく始めますか？');
+                        startGame('new');
+                        return;
+                    }
+                    break;
+            }
+            
+            startScreen.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            scrollToBottomBtn.classList.remove('hidden');
+            displayNextQuestion();
+        }
+
+        /**
+         * 次の問題を表示する
+         */
+        function displayNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questionOrder.length) {
+                const questionIndex = questionOrder[currentQuestionIndex];
+                displayQuestion(questionIndex, false);
+            } else {
+                displayQuizEnd();
+            }
+        }
+        
+        /**
+         * 指定されたインデックスの問題を画面に表示する
+         * @param {number} index - allQuestions配列内の問題のインデックス
+         * @param {boolean} isPreloaded - 再開時に読み込む解答済みの問題か
+         */
+        function displayQuestion(index, isPreloaded) {
+            const question = allQuestions[index];
+            if (!question) return;
+
+            const card = document.createElement('div');
+            card.className = 'glass-bg rounded-xl p-5 sm:p-6 shadow-lg fade-in';
+            card.dataset.questionId = question.questionId;
+            
+            let optionsHtml = '';
+            if (question.options && Array.isArray(question.options)) {
+                optionsHtml = `<ul class="list-none space-y-2 mt-4">${question.options.map(opt => `<li class="bg-black/10 p-3 rounded-md">${opt}</li>`).join('')}</ul>`;
+            }
+
+            let infoHtml = '';
+            if (question.questionInfo) {
+                infoHtml = `<span class="bg-purple-500 text-white text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${question.questionInfo}</span>`;
+            }
+            if (question.difficulty) {
+                infoHtml += `<span class="bg-yellow-500 text-white text-xs font-medium mr-2 px-2.5 py-0.5 rounded-full">${question.difficulty}</span>`;
+            }
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <p class="text-lg font-bold text-indigo-200">問題 ${isPreloaded ? '(解答済み)' : (Object.keys(progress).length + 1)}</p>
+                    <div class="text-right">${infoHtml}</div>
+                </div>
+                <p class="mt-2 text-xl sm:text-2xl font-semibold text-white">${question.questionText}</p>
+                ${optionsHtml}
+                <div class="answer-area mt-4"></div>
+                <div class="action-area mt-4"></div>
+            `;
+            
+            quizContainer.appendChild(card);
+
+            if (isPreloaded) {
+                showAnswer(card, true);
+            } else {
+                const actionArea = card.querySelector('.action-area');
+                const showAnswerBtn = document.createElement('button');
+                showAnswerBtn.textContent = '解答を表示する';
+                showAnswerBtn.className = 'show-answer-btn w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105';
+                actionArea.appendChild(showAnswerBtn);
+                progress[question.questionId] = { status: 'seen' };
+            }
+            
+            updateProgressModal();
+            scrollToBottom();
+        }
+
+        /**
+         * 解答を表示する
+         * @param {HTMLElement | HTMLDivElement} element - ボタンまたはカード要素
+         * @param {boolean} isPreloaded - 再開時に読み込む解答済みの問題か
+         */
+        function showAnswer(element, isPreloaded = false) {
+            const card = element.closest('[data-question-id]');
+            if (!card) return;
+
+            const questionId = card.dataset.questionId;
+            const question = allQuestions.find(q => q.questionId == questionId);
+            if (!question) return;
+
+            const answerArea = card.querySelector('.answer-area');
+            answerArea.innerHTML = `
+                <div class="bg-black/20 p-4 rounded-lg fade-in">
+                    <p class="text-sm font-bold text-green-300">正解</p>
+                    <p class="text-lg font-semibold">${question.answerValue}</p>
+                    ${question.answerExplanation ? `<p class="mt-2 text-white/80">${question.answerExplanation}</p>` : ''}
+                </div>
+            `;
+            
+            progress[question.questionId] = { status: 'answered' };
+
+            const actionArea = card.querySelector('.action-area');
+            actionArea.innerHTML = ''; // 解答表示ボタンを削除
+
+            if (!isPreloaded) {
+                if (currentQuestionIndex < questionOrder.length - 1) {
+                    const nextBtn = document.createElement('button');
+                    nextBtn.textContent = '次の問題へ';
+                    nextBtn.className = 'next-question-btn w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105';
+                    actionArea.appendChild(nextBtn);
+                } else {
+                    displayQuizEnd();
+                }
+            }
+            
+            updateProgressModal();
+            scrollToBottom();
+        }
+
+        /**
+         * 問題集の最後尾に到達した際の表示
+         */
+        function displayQuizEnd() {
+            const endCard = document.createElement('div');
+            endCard.className = 'glass-bg rounded-xl p-6 sm:p-8 text-center text-white shadow-lg fade-in';
+            endCard.innerHTML = `
+                <h3 class="text-2xl font-bold mb-4">お疲れ様でした！</h3>
+                <p>全ての問題が終了しました。</p>
+                <button id="back-to-start-btn" class="mt-6 bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">最初の画面に戻る</button>
+            `;
+            quizContainer.appendChild(endCard);
+            
+            endCard.querySelector('#back-to-start-btn').addEventListener('click', () => {
+                quizContainer.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+                scrollToBottomBtn.classList.add('hidden');
+                clearProgress();
+            });
+            scrollToBottom();
+        }
+        
+        /**
+         * 進捗をWeb Storageに保存する
+         */
+        function saveProgress() {
+            if (allQuestions.length > 0) {
+                const dataToSave = {
+                    questions: allQuestions,
+                    progress: progress
+                };
+                localStorage.setItem(storageKey, JSON.stringify(dataToSave));
+                alert('進捗を保存しました。');
+            } else {
+                alert('保存する問題データがありません。');
+            }
+        }
+        
+        /**
+         * 保存された進捗を読み込む
+         */
+        function loadProgress() {
+            const savedData = localStorage.getItem(storageKey);
+            if (savedData) {
+                resumeBtn.disabled = false;
+            } else {
+                resumeBtn.disabled = true;
+            }
+        }
+        
+        /**
+         * 進捗をクリアする
+         */
+        function clearProgress() {
+            localStorage.removeItem(storageKey);
+            allQuestions = [];
+            progress = {};
+            loadProgress();
+            startButtons.querySelectorAll('button').forEach(b => b.disabled = true);
+            jsonInput.value = '';
+        }
+
+        /**
+         * 設定モーダルの進捗表示を更新する
+         */
+        function updateProgressModal() {
+            if (allQuestions.length === 0) {
+                progressStatus.innerHTML = '<p>問題データが読み込まれていません。</p>';
+                return;
+            }
+            const total = allQuestions.length;
+            const answered = Object.values(progress).filter(p => p.status === 'answered').length;
+            const percentage = total > 0 ? Math.round((answered / total) * 100) : 0;
+            
+            progressStatus.innerHTML = `
+                <p>進捗: ${answered} / ${total} 問 解答済み</p>
+                <div class="w-full bg-gray-700 rounded-full h-2.5 mt-2">
+                    <div class="bg-green-500 h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                </div>
+            `;
+        }
+
+        /**
+         * ページ最下部へスムーズにスクロールする
+         */
+        function scrollToBottom() {
+            window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        // --- イベントリスナーの設定 ---
+
+        // JSONテキストエリアの入力/貼り付け
+        jsonInput.addEventListener('input', () => {
+            loadJson(jsonInput.value);
+        });
+
+        // ファイルアップロード
+        fileUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                jsonInput.value = content;
+                loadJson(content);
+            };
+            reader.onerror = () => {
+                errorMessage.textContent = 'ファイルの読み込みに失敗しました。';
+            };
+            reader.readAsText(file);
+        });
+
+        // スタートボタン
+        startNewBtn.addEventListener('click', () => startGame('new'));
+        startRandomBtn.addEventListener('click', () => startGame('random'));
+        resumeBtn.addEventListener('click', () => {
+            const savedData = localStorage.getItem(storageKey);
+            if(savedData) {
+                loadJson(JSON.stringify(JSON.parse(savedData).questions));
+                startGame('resume');
+            }
+        });
+
+        // 設定モーダル
+        settingsBtn.addEventListener('click', () => {
+            updateProgressModal();
+            settingsModal.classList.remove('hidden');
+        });
+        closeModalBtn.addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+        saveAndQuitBtn.addEventListener('click', () => {
+            saveProgress();
+            settingsModal.classList.add('hidden');
+            quizContainer.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+            scrollToBottomBtn.classList.add('hidden');
+            clearProgress();
+        });
+        
+        // モーダルの外側クリックで閉じる
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.add('hidden');
+            }
+        });
+
+        // 下スクロールボタン
+        scrollToBottomBtn.addEventListener('click', scrollToBottom);
+
+        // 動的生成ボタンのイベント委譲
+        quizContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('show-answer-btn')) {
+                showAnswer(e.target);
+            }
+            if (e.target.classList.contains('next-question-btn')) {
+                displayNextQuestion();
+            }
+        });
+        
+        // --- 初期化処理 ---
+        loadProgress();
+        startButtons.querySelectorAll('button').forEach(b => b.disabled = true);
+    });
+    </script>
+</body>
+</html>

@@ -135,7 +135,7 @@
         </footer>
 
         <!-- 下スクロールボタン -->
-        <button id="scroll-to-bottom-btΩn" class="hidden fixed bottom-20 right-4 sm:right-6 lg:right-8 z-[1000] bg-pink-600 text-white p-3 rounded-full shadow-lg hover:bg-pink-700 transition-transform transform hover:scale-110">
+        <button id="scroll-to-bottom-btn" class="hidden fixed bottom-20 right-4 sm:right-6 lg:right-8 z-[1000] bg-pink-600 text-white p-3 rounded-full shadow-lg hover:bg-pink-700 transition-transform transform hover:scale-110">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
@@ -455,7 +455,9 @@
                         console.log('PWA インストールが拒否されました');
                     }
                     deferredPrompt = null;
-                    installBtn.classList.add('hidden');
+                    if (installBtn) {
+                        installBtn.classList.add('hidden');
+                    }
                 });
             }
         }
@@ -464,10 +466,12 @@
          * オンライン/オフライン状態を更新
          */
         function updateOnlineStatus() {
-            if (navigator.onLine) {
-                offlineIndicator.classList.add('hidden');
-            } else {
-                offlineIndicator.classList.remove('hidden');
+            if (offlineIndicator) {
+                if (navigator.onLine) {
+                    offlineIndicator.classList.add('hidden');
+                } else {
+                    offlineIndicator.classList.remove('hidden');
+                }
             }
         }
 
@@ -574,51 +578,47 @@
         // --- イベントリスナーの設定 ---
 
         // JSONテキストエリアの入力/貼り付け
-        jsonInput.addEventListener('input', () => {
-            loadJson(jsonInput.value);
-        });
+        if (jsonInput) {
+            jsonInput.addEventListener('input', () => {
+                loadJson(jsonInput.value);
+            });
+        }
 
         // ファイルアップロード
-        fileUpload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
+        if (fileUpload) {
+            fileUpload.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const content = e.target.result;
-                jsonInput.value = content;
-                loadJson(content);
-            };
-            reader.onerror = () => {
-                errorMessage.textContent = 'ファイルの読み込みに失敗しました。';
-            };
-            reader.readAsText(file);
-        });
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const content = e.target.result;
+                    if (jsonInput) {
+                        jsonInput.value = content;
+                    }
+                    loadJson(content);
+                };
+                reader.onerror = () => {
+                    if (errorMessage) {
+                        errorMessage.textContent = 'ファイルの読み込みに失敗しました。';
+                    }
+                };
+                reader.readAsText(file);
+            });
+        }
 
         // スタートボタン
-        startNewBtn.addEventListener('click', () => startGame('new'));
-        startRandomBtn.addEventListener('click', () => startGame('random'));
-        resumeBtn.addEventListener('click', () => {
-            startGame('resume');
-        });
-
-        // 設定モーダル
-        settingsBtn.addEventListener('click', () => {
-            updateProgressModal();
-            settingsModal.classList.remove('hidden');
-        });
-        closeModalBtn.addEventListener('click', () => {
-            settingsModal.classList.add('hidden');
-        });
-        // [修正] clearProgress() の呼び出しを削除し、代わりに loadProgress() を呼び出す
-        saveAndQuitBtn.addEventListener('click', () => {
-            saveProgress();
-            settingsModal.classList.add('hidden');
-            quizContainer.classList.add('hidden');
-            startScreen.classList.remove('hidden');
-            scrollToBottomBtn.classList.add('hidden');
-            loadProgress(); // 「続きから」ボタンの状態を更新するために呼び出す
-        });
+        if (startNewBtn) {
+            startNewBtn.addEventListener('click', () => startGame('new'));
+        }
+        if (startRandomBtn) {
+            startRandomBtn.addEventListener('click', () => startGame('random'));
+        }
+        if (resumeBtn) {
+            resumeBtn.addEventListener('click', () => {
+                startGame('resume');
+            });
+        }
         
         // モーダルの外側クリックで閉じる
         settingsModal.addEventListener('click', (e) => {
@@ -628,22 +628,64 @@
         });
 
         // 下スクロールボタン
-        scrollToBottomBtn.addEventListener('click', scrollToBottom);
+        if (scrollToBottomBtn) {
+            scrollToBottomBtn.addEventListener('click', scrollToBottom);
+        }
 
         // PWAインストールボタン
-        installBtn.addEventListener('click', showInstallPrompt);
+        if (installBtn) {
+            installBtn.addEventListener('click', showInstallPrompt);
+        }
+
+        // 設定モーダル
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                updateProgressModal();
+                settingsModal.classList.remove('hidden');
+            });
+        }
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', () => {
+                settingsModal.classList.add('hidden');
+            });
+        }
+        if (saveAndQuitBtn) {
+            saveAndQuitBtn.addEventListener('click', () => {
+                saveProgress();
+                settingsModal.classList.add('hidden');
+                quizContainer.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+                if (scrollToBottomBtn) {
+                    scrollToBottomBtn.classList.add('hidden');
+                }
+                loadProgress();
+            });
+        }
+        
+        // モーダルの外側クリックで閉じる
+        if (settingsModal) {
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal) {
+                    settingsModal.classList.add('hidden');
+                }
+            });
+        }
 
         // PWAインストールプロンプトの準備
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            installBtn.classList.remove('hidden');
+            if (installBtn) {
+                installBtn.classList.remove('hidden');
+            }
         });
 
         // PWAがインストールされた時
         window.addEventListener('appinstalled', (e) => {
             console.log('PWA がインストールされました');
-            installBtn.classList.add('hidden');
+            if (installBtn) {
+                installBtn.classList.add('hidden');
+            }
             deferredPrompt = null;
         });
 

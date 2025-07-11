@@ -92,3 +92,47 @@ quiz-player-app-sample1/
 - バックグラウンド同期
 - データベースとの同期機能
 - より詳細なオフライン分析機能
+
+---
+
+## 🐛 バグ修正 (追記: 2025年7月11日)
+
+### エラー内容
+```
+quiz-player-app-sample1/:631 Uncaught TypeError: Cannot read properties of null (reading 'addEventListener')
+```
+
+### 原因分析
+1. **HTML要素IDの文字化け**: `scroll-to-bottom-btn` が `scroll-to-bottom-btΩn` になっていた
+2. **DOM要素のnull参照**: 存在しない要素に対してイベントリスナーを追加しようとしていた
+
+### 修正内容
+1. **HTMLの修正**
+   - `scroll-to-bottom-btΩn` → `scroll-to-bottom-btn` に修正
+
+2. **JavaScriptの安全性向上**
+   - 全てのDOM要素取得後にnullチェックを追加
+   - イベントリスナー追加前の存在確認を実装
+   - 以下の要素に対してnullチェックを追加:
+     - `scrollToBottomBtn`
+     - `installBtn`
+     - `offlineIndicator`
+     - `settingsBtn`
+     - `closeModalBtn`
+     - `saveAndQuitBtn`
+     - `settingsModal`
+     - `jsonInput`
+     - `fileUpload`
+     - `startNewBtn`
+     - `startRandomBtn`
+     - `resumeBtn`
+     - `errorMessage`
+
+3. **コードの堅牢性向上**
+   - 要素が存在しない場合でもエラーが発生しないよう防御的プログラミングを実装
+   - PWA機能も要素の存在確認後に実行するよう変更
+
+### 修正効果
+- 起動時のエラーが解消
+- DOM要素が見つからない場合でもアプリケーションが正常に動作
+- より安定したPWAアプリケーションを実現
